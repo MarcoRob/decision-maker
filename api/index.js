@@ -19,7 +19,7 @@ routes.get('/all', (req, res) => {
         } else {
             console.log("Connected successfully to Mongo server");
             db.collection('nodeData').find().toArray( (err, data) => {
-                if(err) {
+                if(err) { 
                     throw err;
                 } else {
                     let datanode = [];
@@ -33,6 +33,45 @@ routes.get('/all', (req, res) => {
             })
         }
     });
+});
+
+var selectedCtg = [];
+routes.post('/selected', (req, res) => {
+    console.log(req.body);
+    if(req.body.selectedCat) {
+        selectedCtg = req.body.selectedCat;
+    }
+    res.end();
+});
+routes.get('/getSelectedCategories', (req, res) => {
+    if(selectedCtg.length > 0) {
+        res.send(selectedCtg);
+    } else {
+        res.send(['Internet Company', 'Library']);
+    }
+});
+routes.get('/selectedCategories', (req, res) => {
+    //Graph.getCategories(selectedCtg);
+    //let name = 'Computer Company';
+    mongoClient.connect(mongoUri, (err, db) => {
+        assert.equal(null, err);    
+        if(err) {
+            console.log("Opps! Error");
+        } else {
+            console.log("Connected successfully to Mongo server");
+            db.collection('nodeData').find({'category': { '$in':selectedCtg}}).toArray((err, data) => {
+                if(err) {
+                    throw err;
+                } else {
+                    if(data) {
+                        console.log(data);
+                        res.send(data);
+                    }
+                }
+            });
+        }
+    });
+    
 });
 
 routes.get('/pagenames', (req, res) => {
@@ -71,14 +110,13 @@ routes.get('/categories', (req, res) => {
                 } else {
                     let datanode = [];
                     for(var i=0; i<data.length; i++) {
-                        //hashmap??
-                        //datanode[data[i]['category VARCHAR']] = datanode[data[i]['category VARCHAR']] || {};
-                        if(datanode.indexOf(data[i]['category VARCHAR']) == -1) {
-                            datanode.push(data[i]['category VARCHAR']);
+                        if(datanode) {
+                            if(datanode.indexOf(data[i]['category']) == -1) {
+                                datanode.push(data[i]['category']);
+                            }
                         }
-                        
                     }
-                    console.log(datanode);
+                    //console.log(datanode);
                     res.send(Graph.applyFilterCategories(datanode));
                 }
             })
@@ -145,10 +183,13 @@ routes.get('/nodes/:id', (req, res) => {
                 if(err) {
                     throw err;
                 } else {
+                    console.log(data);
                     var dataNode = {};
                     dataNode.label = data['label VARCHAR'];
-                    dataNode.category = data['category VARCHAR'];
-                    dataNode.fbpage = data['link VARCHAR'];
+                    dataNode.category = data['category'];
+                    dataNode.fbpage = data['link'];
+                    dataNode.node = data.pagegraph;
+                    dataNode.xc = data.category;
                     res.send(dataNode);
                 }
             });

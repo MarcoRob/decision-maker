@@ -1,24 +1,7 @@
 import React, { PropTypes } from 'react';
-
+import DecisionMaker from './DecisionMaker';
 import Categories from './Categories';
 
-const axios = require('axios');
-
-
-var getCategories = function () {
-                        var categories = [];
-                        axios.get('/api/categories')
-                        .then((resp) => {
-                            console.log(resp);
-                            for(var ctg in resp) {
-                                categories.push(ctg);
-                            }
-                        })
-                        .catch((err) => {
-                            console.error(err);
-                        })
-                        return categories;  
-                    };
 
 class Selector extends React.Component {
 
@@ -33,11 +16,18 @@ class Selector extends React.Component {
     return (
       <div>
          <div className='row'>
-           <div className='col-md-4'>
+           <div className='col-md-6'>
              <Categories />
            </div>
-            
+           <div className='col-md-6'>
+             <Categories />
+           </div>
          </div>
+         <div className='row'>
+           <div className='col-md-12'>
+             <DecisionMaker />
+           </div>
+          </div>
          
 
       </div>

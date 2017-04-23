@@ -1,19 +1,18 @@
 import React, { PropTypes } from 'react';
 import Select from 'react-list-select';
+
 const axios = require('axios');
 
 class Categories extends React.Component {
 
-	/*handleSubmit = (event) => {
-		event.preventDefault();
-		//console.log(this.refs.newNameInput.value);
-		/*axios.post('/api/file', event,target.files[0])
-								.then(resp => resp.data)
-	};*/
 constructor(props, context) {
 	super(props, context);
-	this.state = {"categories": []};
+	this.state = {
+		"categories": [],
+		"selectedCatg" : []
+	};
 }
+
 componentDidMount() {
 	this.getCategories()
 		.then((array) => {
@@ -35,36 +34,83 @@ getCategories () {
 		);
 }
 
-logChange(val) {
-  console.log("Selected: " + val);
-}
-
 renderCategories() {
 	return this.state.categories.map((ctg) => {
 		return <div className='context'>{ctg}</div>;
 	})
 }
 
-selectedValues (selected) {
-	console.log(selected);
-	console.log(this.state.categories[selected]);
+saveCategories = (catg) => {
+	var array = this.state.selectedCatg;
+	if(array.length < 5) {
+		if(array.indexOf(this.state.categories[catg]) == -1) {
+			array.push(this.state.categories[catg]);
+		} else {
+			alert('You can not add twice');
+		}
+		console.log(array);
+	} else {
+		alert('You can only add 5 categories');
+	}
+	this.setState({'selectedCatg': array});
+};
+
+ handleOnValueClick (val) {
+	console.log(val);
+ 	
+ }
+
+ handleSubmit = (value) => {
+	axios.post("api/selected", {
+		'selectedCat': this.state.selectedCatg
+	});
+ };
+
+ renderSelectedCategories() {
+	return this.state.selectedCatg.map((selected, key) => {
+		return <li key={key} className="list-group-item">{selected}</li>;
+	})
+}
+
+removeCatg = () => {
+	this.setState({'selectedCatg':[]});
+}
+
+addRemoveBtn () {
+	if(this.state.selectedCatg.length > 0) {
+		return (<button type="submit" className="center btn btn-warning" onClick={this.removeCatg}>
+			X&nbsp;Remove </button>);
+	} else {
+		return (<div>&nbsp;</div>);
+	}
 }
 
 render () {
+	// <form method='post' action='api/selectingCtg' encType='multipart/form-data'>
 		return (
 			<div className='container-fluid'><br/>
-				<form>
 				<h4 className='center'> Select Categories </h4>
-				<div className='context center'>
-					<Select items={this.renderCategories()}
-					  multiple={true}
-					  onChange={function vals(e) {console.log(e)}} />;
+				<div className='row'>
+					<div className='col-md-7'>
+						<div className='context center'>
+							<Select items={this.renderCategories()}
+							onChange={this.saveCategories}
+							name='categories' />;
+						</div>
+					</div>
+					<div className='col-md-5'>
+						<ul className='context list-group'>
+							{this.renderSelectedCategories()}
+						</ul>
+						{this.addRemoveBtn()}
+					</div>
 				</div>
-				<button type="submit" className="center btn btn-primary">
-                            <i className="mdi mdi-submit" aria-hidden="true"></i>Submit</button><br/>&nbsp;
-				</form>	
+				<button type="submit" className="center btn btn-primary" onClick={this.handleSubmit}>
+					<i className="mdi mdi-send" aria-hidden="true"></i>&nbsp;Submit
+					</button><br/>
 			</div>
 		);
+		
 	}
 }
 

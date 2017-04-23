@@ -1,10 +1,7 @@
 const fs = require('fs');
-const axios = require('axios');
 const mongoClient = require('../config').mongoClient;
 const assert = require('assert');
 const mongoUri = require('../config').mongoUri;//'mongodb://localhost/testDta';
-
-
 
 
 var graphParse = function (fileName, pagegraph) {
@@ -34,8 +31,12 @@ var graphParse = function (fileName, pagegraph) {
                    /*if(fieldValues[j] != '' || fieldValues[j]) {
                         fieldValues[j] = j*5;
                    }*/
-                   if(properties[j] == 'name VARCHAR') {
+                   if (properties[j] == 'name VARCHAR') {
                         nodeData.idNode = fieldValues[j];
+                   } else if (properties[j] == 'category VARCHAR') {
+                        nodeData.category = fieldValues[j];
+                   } else if (properties[j] == 'link VARCHAR') {
+                        nodeData.link = fieldValues[j];
                    } else {
                         nodeData[properties[j]] = fieldValues[j];
                    }
@@ -72,10 +73,9 @@ var insertNodes = (dataArr) => {
         if(err) {
             console.log("Opps! Error");
         } else {
-            console.log("Connected successfully to Mongo server");
+            console.log("Connected Mongo Server - Insert Nodes");
             db.collection('nodeData').insertMany(dataArr, (err, res) => {
-                if(err) {
-                    //console.error(err);
+                if(err) { //console.error(err);
                     throw err;
                 } 
                 console.log('Nodes data inserted');
@@ -90,7 +90,7 @@ var insertEdges = (dataArr) => {
         if(err) {
             console.log("Opps! Error");
         } else {
-            console.log("Connected successfully to Mongo server");
+            console.log("Connected Mongo Server - Edges Nodes");
             db.collection('edgeData').insertMany(dataArr, (err, res) => {
                 if(err) {
                     //console.error(err);
@@ -106,32 +106,73 @@ var insertEdges = (dataArr) => {
 var applyFilterCategories = (ctgs) => {
     var categories = [];
 	var duplicated = false;
-    for(var ctg of ctgs) {
-        console.log(ctg);
-        for (var cat of categories) {
-            console.log(cat.substr(0,4) + ", " + ctg.substr(0,4));
-            if (cat.substr(0, 4) == ctg.substr(0,4)) {
-                duplicated = true;
-                break;
+    if(ctgs) {
+        for(var ctg of ctgs) {
+            if(ctg) {
+                for (var cat of categories) {
+                    if (cat.substr(0, 4) == ctg.substr(0,4)) {
+                        duplicated = true;
+                        break;
+                    }
+                }
+                if (ctg.charAt(0) != ' ' && !duplicated) {
+                    categories.push(ctg);
+                } 
+                duplicated = false;
             }
         }
-        if (ctg.charAt(0) != ' ' && !duplicated) categories.push(ctg);
-        duplicated = false;
-            //ct += ctg + '<br/>';
+        categories.sort();
     }
-    categories.sort();
+    
     return categories;
 }
 
-
+// Pagerank Algorithm
 var pagerank = () => {
+
 
     return pagerank;
 };
+/* Return the list of the nodes pointed to a specific node
+   Params:
+    nodes - Array of nodes
+    node - Specific node that are pointed by the nodes
+*/
+var pointedBy = (nodes, node) => {
+    let list = [];
+    for(let i=0; i < nodes.length; i++) {
+        for(let pointed of nodes[i].getAllEdges()) {
+            if(pointed == node) {
+                list.push(i);
+            }
+        }
+    }
+    return list;
+}
 
+// Apply the sum of the ranks 
+/* Params: 
+    nodes - Array of nodes
+    ranks - Array of the ranks in pagerank
+    card - Array of cadinalities in pagerank
+*/
 var sumranks = (nodes, ranks, card) => {
-
+    let ranksSum = 0;
+    for(let node of nodes) {
+        if(card[node] != 0) {
+            ranksSum += (ranks[node]/card[node]);
+        }
+    }
+    return ranksSum;
 };
+
+var maxPageRank = () => {
+    let maxNode = 1;
+    for(let node of pageRank) {
+        maxNode = node > maxNode ? node : maxNode;
+    }
+    return maxNode;
+}
 
 Array.prototype.contains = function(name) {  
   let i = this.length;
