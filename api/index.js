@@ -36,57 +36,117 @@ routes.get('/all', (req, res) => {
 });
 
 var selectedCtg = [];
+var selectedPages = [];
+var listNodes = [];
 routes.post('/selected', (req, res) => {
     console.log(req.body);
-    if(req.body.selectedCat) {
+    if(req.body.selectedCat && req.body.selectedPages) {
         selectedCtg = req.body.selectedCat;
+        selectedPages = req.body.selectedPages;
     }
     res.end();
 });
-routes.get('/getSelectedCategories', (req, res) => {
-    if(selectedCtg.length > 0) {
-        res.send(selectedCtg);
-    } else {
-        res.send(['Internet Company', 'Library']);
+
+
+routes.get('/selectedOptions', (req, res) => {
+    if(selectedCtg && selectedPages ) {
+        mongoClient.connect(mongoUri, (err, db) => {
+            assert.equal(null, err);    
+            if(err) {
+                console.log("Opps! Error");
+            } else {
+                console.log("Connected successfully to Mongo server - Options");
+                db.collection('nodeData').find({'category': {'$in':selectedCtg}, 
+                                    'pagegraph':{'$in':selectedPages}}).toArray((err, data) => {
+                    if(err) {
+                        throw err;
+                    } else {
+                        console.log(data.length);
+                        if(data.length <= 0) {
+                            console.log(data);
+                            res.send(data[0]);
+                        } else {
+                            for(var node=0; node<data.length; node++) {
+                                if(data[node]) {
+                                    console.log(data[node].idNode);
+                                    listNodes.push(data[node].idNode);
+                                }
+                            }
+                            res.send(data);
+                        }
+                    }
+                });
+            }
+        });
     }
 });
-routes.get('/selectedCategories', (req, res) => {
-    //Graph.getCategories(selectedCtg);
-    //let name = 'Computer Company';
+
+routes.get('/test', (req, res) => {
+    let edges = [];
+    for(let node of listNodes) {
+        mongoClient.connect(mongoUri, (err, db) => {
+            assert.equal(null, err);    
+            if(err) {
+                console.log("Opps! Error");
+            } else {
+                console.log("Connected successfully to Mongo server - Edges Subgraph");
+                db.collection('edgeData').find({'v1':node}).toArray( (err, data) => {
+                    if(err) {
+                        throw err;
+                    } else {
+                        for(let i of data) {
+                            if(data[i]) {
+                                edges.push({v1:data[i].v1, v2:data[i].v2});
+                            }
+                        }
+                        
+                    }
+
+                })
+            }
+        });
+    }
+    res.send(edges);
+    
+});
+
+routes.get('/pagenames', (req, res) => {
     mongoClient.connect(mongoUri, (err, db) => {
         assert.equal(null, err);    
         if(err) {
             console.log("Opps! Error");
         } else {
             console.log("Connected successfully to Mongo server");
-            db.collection('nodeData').find({'category': { '$in':selectedCtg}}).toArray((err, data) => {
+            db.collection('pageData').find().toArray( (err, data) => {
                 if(err) {
                     throw err;
                 } else {
-                    if(data) {
-                        console.log(data);
-                        res.send(data);
+                    let pages = [];
+                    for(var i=0; i<data.length; i++) {
+                        pages.push(data[i].page);
                     }
+                    res.send(pages);
                 }
-            });
+            })
         }
     });
-    
 });
 
-routes.get('/pagenames', (req, res) => {
-    res.send(pagenames);
-});
-
-let pagenames = {};
-
+var pages = [];
 routes.post('/file', upload.single('txt'), (req, res) => {
     //res.send(req.body);
-    if(req.body.pagename) {
-        pagenames[req.body.pagename] = pagenames[req.body.pagename] || {};
-        console.log(pagenames);
-    }
+   /* if(req.body.pagename) {
+        let pagesname = req.body.pagename;
+        pages.push(pagesname);
+        Graph.insertPages(pages);
+        //pagenames[req.body.pagename] = pagenames[req.body.pagename] || {};
+        console.log(pages);
+    }*/
     if(req.file && req.body.pagename) {
+        let pages = req.body.pagename;
+        Graph.insertPages(pages);
+        //pagenames[req.body.pagename] = pagenames[req.body.pagename] || {};
+        console.log(pages);
         console.log('Uploaded');
         const {path, originalname} = req.file;
         Graph.graphParse(path, req.body.pagename);
@@ -96,6 +156,7 @@ routes.post('/file', upload.single('txt'), (req, res) => {
     }
     res.redirect('/');
 });
+
 // Get all the categories without any filter from the database
 routes.get('/categories', (req, res) => {
     mongoClient.connect(mongoUri, (err, db) => {
@@ -138,7 +199,7 @@ routes.get('/nodes', (req, res) => {
                 } else {
                     let datanode = [];
                     for(var i=0; i<data.length; i++) {
-                        datanode.push({'node':data[i].idNode, 'category':data[i]['category VARCHAR']});
+                        datanode.push({'node':data[i].idNode, 'category':data[i]['category']});
                     }
                     res.send(datanode);
                 }
@@ -159,11 +220,11 @@ routes.get('/edges', (req, res) => {
                 if(err) {
                     throw err;
                 } else {
-                    let datanode = [];
+                    let dataedge = [];
                     for(var i=0; i<data.length; i++) {
-                        datanode.push({'v1':data[i].v1, 'v2':data[i].v2});
+                        dataedge.push({'id': data[i]._id, edge:{'v1':data[i].v1, 'v2':data[i].v2}});
                     }
-                    res.send(datanode);
+                    res.send(dataedge);
                 }
             })
         }
@@ -197,12 +258,14 @@ routes.get('/nodes/:id', (req, res) => {
     });
 });
 
+var influyentNode = [];
 routes.post('/pagerank', (req, res) => {
     let nodes = [];
-    axios.get('/api/nodes')
-        .then(resp => {
-            nodesresp.data
-        })
+    
+});
+
+routes.get('/mostInfluyentNode', (req, res) => {
+
 });
 
 /*routes.get('/graph', (req, res) => {

@@ -84,6 +84,23 @@ var insertNodes = (dataArr) => {
     });
 };
 
+var insertPages = (page) => {
+    mongoClient.connect(mongoUri, (err, db) => {
+        assert.equal(null, err);    
+        if(err) {
+            console.log("Opps! Error");
+        } else {
+            console.log("Connected Mongo Server - FB Pages");
+            db.collection('pageData').insert({'page':page}, (err, res) => {
+                if(err) { //console.error(err);
+                    throw err;
+                } 
+                console.log('Pages names data inserted');
+            })
+        }
+    });
+};
+
 var insertEdges = (dataArr) => {
     mongoClient.connect(mongoUri, (err, db) => {
         assert.equal(null, err);    
@@ -127,9 +144,45 @@ var applyFilterCategories = (ctgs) => {
     return categories;
 }
 
-// Pagerank Algorithm
-var pagerank = () => {
+var addAtribute = (label, value, node) => {
+    mongoClient.connect(mongoUri, (err, db) => {
+        assert.equal(null, err);    
+        if(err) {
+            console.log("Opps! Error");
+        } else {
+            console.log("Connected Mongo Server - Insert Nodes");
+            db.collection('nodeData').findAndModify({node : 'idNode'}, null, {label: value}, (err, res) => {
+                if(err) { //console.error(err);
+                    throw err;
+                } 
+                console.log('');
+            });
+        }
+    });
+};
 
+// Pagerank Algorithm
+var pagerank = (nodes, nodesOut) => {
+    //let nodes = [];
+    let pageranks = [];
+    let cardinality = [];
+
+    for(let i=0; i<nodes.length; i++) {
+        pageranks[i] = 0.00;
+        cardinality[i] = getAllEdges(nodes[i], nodesOut).length;
+    }
+    let maxIter = 0;
+    let previous = 0;
+    do {
+        for(let i=0; i<nodes.length; i++) {
+            pageranks[i] = 0.15 + 0.85 * sumRanks(pointedBy(nodes, nodes[i]), pageranks, cardinality, i);
+            previous = (i == 0 ? pageranks[i] : previous);
+        }
+    } while(++maxIter < 100);
+
+    for(let i=0; i < nodes.length; i++) {
+        
+    }
 
     return pagerank;
 };
@@ -138,18 +191,60 @@ var pagerank = () => {
     nodes - Array of nodes
     node - Specific node that are pointed by the nodes
 */
+var getAllEdges = (node, nodesEnd) => {
+    return mongoClient.connect(mongoUri, (err, db) => {
+        assert.equal(null, err);    
+        if(err) {
+            console.log("Opps! Error");
+        } else {
+            console.log("Connected successfully to Mongo server");
+            db.collection('edgeData').find({'v1':node, 'v2':{'$in':nodesEnd}}).toArray( (err, data) => {
+                if(err) {
+                    throw err;
+                } else {
+                    let edges = [];
+                    for(let i of data) {
+                        if(data[i]) {
+                            edges.push(data[i].v1);
+                        }
+                    }
+                    return edges;
+                }
+
+            })
+        }
+    });
+};
+
+var getAllNodes = () => {
+    return mongoClient.connect(mongoUri, (err, db) => {
+        assert.equal(null, err);    
+        if(err) {
+            console.log("Opps! Error");
+        } else {
+            console.log("Connected successfully to Mongo server");
+            db.collection('nodeData').find().toArray( (err, data) => {
+                if(err) {
+                    throw err;
+                } else {
+                    return (data);
+                }
+            })
+        }
+    });
+}
+
 var pointedBy = (nodes, node) => {
     let list = [];
     for(let i=0; i < nodes.length; i++) {
-        for(let pointed of nodes[i].getAllEdges()) {
+        for(let pointed of getAllEdges(nodes[i])) {
             if(pointed == node) {
                 list.push(i);
             }
         }
     }
     return list;
-}
-
+};
 // Apply the sum of the ranks 
 /* Params: 
     nodes - Array of nodes
@@ -167,12 +262,12 @@ var sumranks = (nodes, ranks, card) => {
 };
 
 var maxPageRank = () => {
-    let maxNode = 1;
-    for(let node of pageRank) {
-        maxNode = node > maxNode ? node : maxNode;
+    let maxNode = getAllNodes()[0];
+    for(let node of getAllNodes()) {
+        maxNode = node.pagerank > maxNode.pagerank ? node : maxNode;
     }
     return maxNode;
-}
+};
 
 Array.prototype.contains = function(name) {  
   let i = this.length;
@@ -244,4 +339,4 @@ Graph.prototype.printNodes = function() {
 };
 
 
-module.exports = {Graph, graphParse, pagerank, applyFilterCategories};
+module.exports = {Graph, graphParse, maxPageRank, pagerank, applyFilterCategories, insertPages};
