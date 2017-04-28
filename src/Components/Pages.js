@@ -68,7 +68,7 @@ savePages = (catg) => {
 
  renderSelectedPages() {
 	return this.state.selectedPages.map((selected, key) => {
-		return <li key={key} className="list-group-item">{selected}</li>;
+		return <li key={key} className="list-group-item"><h5>{selected}</h5></li>;
 	})
 }
 

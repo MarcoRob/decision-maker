@@ -180,11 +180,7 @@ var pagerank = (nodes, nodesOut) => {
         }
     } while(++maxIter < 100);
 
-    for(let i=0; i < nodes.length; i++) {
-        
-    }
-
-    return pagerank;
+    return pageranks;
 };
 /* Return the list of the nodes pointed to a specific node
    Params:
@@ -269,7 +265,7 @@ var maxPageRank = () => {
     return maxNode;
 };
 
-Array.prototype.contains = function(name) {  
+/*Array.prototype.contains = function(name) {  
   let i = this.length;
   while (i--) {
     if (this[i].name === name) {
@@ -336,7 +332,7 @@ Graph.prototype.printNodes = function() {
     console.log(this.node_list[i].name +":");
     console.log(this.node_list[i].edge_list);
   }
-};
+}; */
 
 
-module.exports = {Graph, graphParse, maxPageRank, pagerank, applyFilterCategories, insertPages};
+module.exports = {graphParse, maxPageRank, pagerank, applyFilterCategories, insertPages};

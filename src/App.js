@@ -20,7 +20,7 @@ class InfluyentNode extends React.Component {
                 console.log(array.data);
                 console.log('array Size '+array.data.length);
                 if(array.data.length > 1) {
-                    var size = Math.floor((Math.random() * array.data.length) + 1);
+                    var size = Math.floor((Math.random() * array.data.length));
                     console.log('size '+size);
                     this.setState({"influyent": array.data[size]});
                 } else {
@@ -49,7 +49,12 @@ class InfluyentNode extends React.Component {
     render() {
         return (
         <div className='center' {...this.props}>
-            {this.renderInfluyentNode()}
+            <div className="panel panel-info">
+                <div className="panel-body">
+                    {this.renderInfluyentNode()}
+                </div>
+            </div>
+            
         </div>
         );
     }  
@@ -67,6 +72,7 @@ class App extends React.Component {
 	}
 
     handleClick() {
+        alert('Make sure you have categories selected'); 
         this.setState({
             "getInfluyent": true
         });
@@ -82,9 +88,9 @@ class App extends React.Component {
                     </div>
                     <div className='col-md-6'>
                         <div className='wrapper'>
-                            <h2 className='text-center'>Most Influyent Node </h2>
+                            <h2 className='text-center'>Most Influyent Page </h2>
                             {this.state.getInfluyent ? <InfluyentNode /> : null}
-                            <button className='btn btn-primary center' onClick={this.handleClick.bind(this)}>Get</button>
+                            <button className='btn btn-primary center' onClick={this.handleClick.bind(this)}>Get Decision</button>
                             <br/>
                         </div>
                     </div>
